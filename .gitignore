@@ -1,0 +1,25 @@
+# PlatformIO build files
+.pio/
+compile_commands.json
+
+# Local IDE state
+.vscode/
+
+# Local SDKs, captures and generated deliverables
+tmp/
+output/
+
+# Android build files
+app/ESP-Drone-Android/.gradle/
+app/ESP-Drone-Android/build/
+app/ESP-Drone-Android/local.properties
+
+# Local credentials and logs
+.env
+*.key
+*.pem
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
