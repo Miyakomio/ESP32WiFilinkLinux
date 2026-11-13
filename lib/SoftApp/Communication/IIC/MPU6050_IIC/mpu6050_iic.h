@@ -92,6 +92,15 @@ private:
     float mGyroBiasDps[3] = {};
     float mRollOffsetDeg = 0.0f;
     float mPitchOffsetDeg = 0.0f;
+    float mQ0 = 1.0f;
+    float mQ1 = 0.0f;
+    float mQ2 = 0.0f;
+    float mQ3 = 0.0f;
+    float mExInt = 0.0f;
+    float mEyInt = 0.0f;
+    float mEzInt = 0.0f;
+    uint8_t mFusionDivider = 0;
+    float mFusionDt = 0.0f;
     float mRollDeg = 0.0f;
     float mPitchDeg = 0.0f;
     float mYawDeg = 0.0f;

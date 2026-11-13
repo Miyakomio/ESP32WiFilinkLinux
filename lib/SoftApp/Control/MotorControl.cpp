@@ -15,8 +15,14 @@ portMUX_TYPE sPidMux = portMUX_INITIALIZER_UNLOCKED;
 constexpr float kMaxRollPitchRateDps = 120.0f;
 constexpr float kMaxYawRateDps = 150.0f;
 constexpr float kMaxRateCorrection = 1000.0f;
+constexpr float kAngleLoopDt = 0.004f;
+constexpr float kAngleFeedForward = 2.0f;
 constexpr uint32_t kCommandTimeoutMs = 500;
 constexpr float kMaxCommandThrust = 65000.0f;
+
+float sTargetRollRate = 0.0f;
+float sTargetPitchRate = 0.0f;
+float sAngleLoopElapsed = 0.0f;
 
 float clampFloat(float value, float minimum, float maximum)
 {
@@ -79,6 +85,9 @@ void resetPidInternal()
     resetPid(RollVelocityPID);
     resetPid(PitchVelocityPID);
     resetPid(YawPID);
+    sTargetRollRate = 0.0f;
+    sTargetPitchRate = 0.0f;
+    sAngleLoopElapsed = 0.0f;
 }
 
 float updatePid(PID_t &pid, float target, float actual, float dt)
@@ -280,18 +289,44 @@ bool MotorControl(const softapp::wifi::RemoteCommand &command,const softapp::mpu
     }
 
     portENTER_CRITICAL(&sPidMux);
-    const float targetRollRate =
-        updatePid(RollPID, command.rollDeg, imu.rollDeg, dt);
-    const float targetPitchRate =
-        updatePid(PitchPID, command.pitchDeg, imu.pitchDeg, dt);
+    sAngleLoopElapsed += dt;
+    if (sAngleLoopElapsed >= kAngleLoopDt)
+    {
+        sTargetRollRate = updatePid(
+            RollPID,
+            command.rollDeg,
+            imu.rollDeg,
+            sAngleLoopElapsed
+        );
+        sTargetPitchRate = updatePid(
+            PitchPID,
+            command.pitchDeg,
+            imu.pitchDeg,
+            sAngleLoopElapsed
+        );
+        sAngleLoopElapsed = 0.0f;
+    }
 
-    const float rollCorrection =
-        updatePid(RollVelocityPID,targetRollRate,imu.gyroDps[0],dt);
+    float rollCorrection = updatePid(
+        RollVelocityPID,
+        sTargetRollRate,
+        imu.gyroDps[0],
+        dt
+    );
 
-    const float pitchCorrection =
-        updatePid(PitchVelocityPID,targetPitchRate,imu.gyroDps[1],dt);
+    float pitchCorrection = updatePid(
+        PitchVelocityPID,
+        sTargetPitchRate,
+        imu.gyroDps[1],
+        dt
+    );
     const float yawCorrection =
         updatePid(YawPID,command.yawRateDps,imu.gyroDps[2],dt);
+
+    // Jiangxie-style desired-angle feed-forward. The 0.1 factor from
+    // the 0..100 motor scale is scaled for this project's 0..1000 scale.
+    rollCorrection += command.rollDeg * kAngleFeedForward;
+    pitchCorrection += command.pitchDeg * kAngleFeedForward;
 
     const float throttle =
         static_cast<float>(command.thrust) *

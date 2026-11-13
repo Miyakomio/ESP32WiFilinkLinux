@@ -87,6 +87,15 @@ Result MPU6050_IIC::begin(iic::Bus &bus, const Config &config)
     mLastSampleUs = 0;
     mRollOffsetDeg = 0.0f;
     mPitchOffsetDeg = 0.0f;
+    mQ0 = 1.0f;
+    mQ1 = 0.0f;
+    mQ2 = 0.0f;
+    mQ3 = 0.0f;
+    mExInt = 0.0f;
+    mEyInt = 0.0f;
+    mEzInt = 0.0f;
+    mFusionDivider = 0;
+    mFusionDt = 0.0f;
     mRollDeg = 0.0f;
     mPitchDeg = 0.0f;
     mYawDeg = 0.0f;
@@ -187,14 +196,38 @@ Result MPU6050_IIC::read(Data &data)
                 data.accelG[2] * data.accelG[2]
             )
         ) * RadToDeg;
-    const float levelRoll = accelRoll - mRollOffsetDeg;
-    const float levelPitch = accelPitch - mPitchOffsetDeg;
-
     const uint32_t nowUs = micros();
     if (!mAttitudeInitialized)
     {
-        mRollDeg = levelRoll;
-        mPitchDeg = levelPitch;
+        const float theta = atan2f(data.accelG[1], data.accelG[2]);
+        const float phi = atan2f(
+            -data.accelG[0],
+            sqrtf(
+                data.accelG[1] * data.accelG[1] +
+                data.accelG[2] * data.accelG[2]
+            )
+        );
+        const float halfRoll = theta * 0.5f;
+        const float halfPitch = phi * 0.5f;
+        const float cosRoll = cosf(halfRoll);
+        const float sinRoll = sinf(halfRoll);
+        const float cosPitch = cosf(halfPitch);
+        const float sinPitch = sinf(halfPitch);
+
+        mQ0 = cosPitch * cosRoll;
+        mQ1 = cosPitch * sinRoll;
+        mQ2 = sinPitch * cosRoll;
+        mQ3 = -sinPitch * sinRoll;
+        const float norm = sqrtf(
+            mQ0 * mQ0 + mQ1 * mQ1 + mQ2 * mQ2 + mQ3 * mQ3
+        );
+        mQ0 /= norm;
+        mQ1 /= norm;
+        mQ2 /= norm;
+        mQ3 /= norm;
+
+        mRollDeg = accelRoll - mRollOffsetDeg;
+        mPitchDeg = accelPitch - mPitchOffsetDeg;
         mYawDeg = 0.0f;
         data.rollDeg = mRollDeg;
         data.pitchDeg = mPitchDeg;
@@ -214,13 +247,93 @@ Result MPU6050_IIC::read(Data &data)
         dt = 0.01f;
     }
 
-    mRollDeg = mConfig.complementaryAlpha *
-        (mRollDeg + data.gyroDps[0] * dt) +
-        (1.0f - mConfig.complementaryAlpha) * levelRoll;
-    mPitchDeg = mConfig.complementaryAlpha *
-        (mPitchDeg + data.gyroDps[1] * dt) +
-        (1.0f - mConfig.complementaryAlpha) * levelPitch;
-    mYawDeg = wrapDegrees(mYawDeg + data.gyroDps[2] * dt);
+    mFusionDt += dt;
+    ++mFusionDivider;
+    if (mFusionDivider < 2)
+    {
+        data.rollDeg = mRollDeg;
+        data.pitchDeg = mPitchDeg;
+        data.yawDeg = mYawDeg;
+        return Result::Ok;
+    }
+    mFusionDivider = 0;
+    const float fusionDt = mFusionDt;
+    mFusionDt = 0.0f;
+
+    float fusionGx = data.gyroDps[0] / RadToDeg;
+    float fusionGy = data.gyroDps[1] / RadToDeg;
+    float fusionGz = data.gyroDps[2] / RadToDeg;
+    const float accelNorm = sqrtf(
+        data.accelG[0] * data.accelG[0] +
+        data.accelG[1] * data.accelG[1] +
+        data.accelG[2] * data.accelG[2]
+    );
+    if (accelNorm > 0.0001f)
+    {
+        const float ax = data.accelG[0] / accelNorm;
+        const float ay = data.accelG[1] / accelNorm;
+        const float az = data.accelG[2] / accelNorm;
+        const float vx = 2.0f * (mQ1 * mQ3 - mQ0 * mQ2);
+        const float vy = 2.0f * (mQ0 * mQ1 + mQ2 * mQ3);
+        const float vz = 1.0f - 2.0f * (mQ1 * mQ1 + mQ2 * mQ2);
+        const float ex = ay * vz - az * vy;
+        const float ey = az * vx - ax * vz;
+        const float ez = ax * vy - ay * vx;
+        constexpr float filterKp = 0.2f;
+        constexpr float filterKi = 0.1f;
+
+        mExInt += ex * fusionDt;
+        mEyInt += ey * fusionDt;
+        mEzInt += ez * fusionDt;
+
+        fusionGx += filterKp * ex + filterKi * mExInt;
+        fusionGy += filterKp * ey + filterKi * mEyInt;
+        fusionGz += filterKp * ez + filterKi * mEzInt;
+    }
+
+    const float halfDt = 0.5f * fusionDt;
+
+    mQ0 += halfDt *
+        (-mQ1 * fusionGx - mQ2 * fusionGy - mQ3 * fusionGz);
+    mQ1 += halfDt *
+        ( mQ0 * fusionGx - mQ3 * fusionGy + mQ2 * fusionGz);
+    mQ2 += halfDt *
+        ( mQ3 * fusionGx + mQ0 * fusionGy - mQ1 * fusionGz);
+    mQ3 += halfDt *
+        (-mQ2 * fusionGx + mQ1 * fusionGy + mQ0 * fusionGz);
+
+    const float quaternionNorm = sqrtf(
+        mQ0 * mQ0 + mQ1 * mQ1 + mQ2 * mQ2 + mQ3 * mQ3
+    );
+    if (quaternionNorm > 0.0001f)
+    {
+        mQ0 /= quaternionNorm;
+        mQ1 /= quaternionNorm;
+        mQ2 /= quaternionNorm;
+        mQ3 /= quaternionNorm;
+    }
+
+    mRollDeg =
+        atan2f(
+            2.0f * (mQ2 * mQ3 + mQ0 * mQ1),
+            1.0f - 2.0f * (mQ1 * mQ1 + mQ2 * mQ2)
+        ) * RadToDeg - mRollOffsetDeg;
+    mPitchDeg =
+        asinf(
+            fmaxf(
+                -1.0f,
+                fminf(
+                    1.0f,
+                    2.0f * (mQ0 * mQ2 - mQ1 * mQ3)
+                )
+            )
+        ) * RadToDeg - mPitchOffsetDeg;
+    mYawDeg = wrapDegrees(
+        atan2f(
+            2.0f * (mQ1 * mQ2 + mQ0 * mQ3),
+            1.0f - 2.0f * (mQ2 * mQ2 + mQ3 * mQ3)
+        ) * RadToDeg
+    );
 
     data.rollDeg = mRollDeg;
     data.pitchDeg = mPitchDeg;
@@ -326,6 +439,15 @@ void MPU6050_IIC::resetAttitude()
 {
     mAttitudeInitialized = false;
     mLastSampleUs = 0;
+    mQ0 = 1.0f;
+    mQ1 = 0.0f;
+    mQ2 = 0.0f;
+    mQ3 = 0.0f;
+    mExInt = 0.0f;
+    mEyInt = 0.0f;
+    mEzInt = 0.0f;
+    mFusionDivider = 0;
+    mFusionDt = 0.0f;
     mRollDeg = 0.0f;
     mPitchDeg = 0.0f;
     mYawDeg = 0.0f;
