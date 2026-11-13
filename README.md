@@ -212,6 +212,12 @@ MOTOR out=M1,M2,M3,M4 control=on
 
 `control=on` 表示 PID 和电机控制链路有效，`control=off` 表示遥控、IMU 或解锁状态不满足控制条件。
 
+### 电机顺序测试
+
+`src/main.cpp` 中默认启用了单电机顺序测试。飞控启动后会依次运行 M1、M2、M3、M4，每路以 `kMinSpeed` 运行 2 秒，各路之间停止 1 秒，测试完成后进入正常任务。
+
+测试前必须拆掉全部桨叶。测试完成后将 `kEnableMotorSequenceTest` 改为 `false`，再编译正式飞行固件。
+
 ## 编译 Android APP
 
 Android 工程位置：

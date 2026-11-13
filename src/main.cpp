@@ -1,9 +1,58 @@
 #include "main.h"
 
+namespace
+{
+
+constexpr bool kEnableMotorSequenceTest = true;
+constexpr uint32_t kMotorTestRunMs = 2000;
+constexpr uint32_t kMotorTestPauseMs = 1000;
+
+void runMotorSequenceTest()
+{
+    hardware::motor::MotorController controller;
+    hardware::motor::Config config;
+
+    if (!controller.begin(config))
+    {
+        Serial.println("Motor sequence test: PWM initialization failed");
+        return;
+    }
+
+    Serial.printf(
+        "Motor sequence test: M1-M4 at speed %d, %lu ms each\n",
+        static_cast<int>(hardware::motor::kMinSpeed),
+        static_cast<unsigned long>(kMotorTestRunMs)
+    );
+
+    for (uint8_t motor = 0;
+         motor < hardware::motor::kMotorCount;
+         ++motor)
+    {
+        Serial.printf("Motor sequence test: M%u ON\n", motor + 1);
+        controller.setSpeed(motor, hardware::motor::kMinSpeed);
+        delay(kMotorTestRunMs);
+
+        controller.setSpeed(motor, hardware::motor::kStopSpeed);
+        Serial.printf("Motor sequence test: M%u OFF\n", motor + 1);
+        delay(kMotorTestPauseMs);
+    }
+
+    controller.stopAll();
+    controller.end();
+    Serial.println("Motor sequence test: complete");
+}
+
+} // namespace
+
 void setup()
 {
     Serial.begin(115200);
     delay(1000);
+
+    if (kEnableMotorSequenceTest)
+    {
+        runMotorSequenceTest();
+    }
 
     if (!StartTask())
     {
