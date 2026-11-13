@@ -121,7 +121,7 @@ void entry(void *context)
             //悬停代码::待补充
             for (uint8_t i = 0; i < hardware::motor::kMotorCount; ++i)
             {
-                output.speed[i] = hardware::motor::kMinSpeed;
+                output.speed[i] = hardware::motor::kStopSpeed;
             }
 
             // if (armed)
@@ -141,7 +141,7 @@ void entry(void *context)
                  i < hardware::motor::kMotorCount;
                  ++i)
             {
-                output.speed[i] = hardware::motor::kMinSpeed;
+                output.speed[i] = hardware::motor::kStopSpeed;
             }
         }
 
@@ -204,7 +204,7 @@ void lock()
     sArmed = false;
     for (uint8_t i = 0; i < hardware::motor::kMotorCount; ++i)
     {
-        sCommand.speed[i] = hardware::motor::kMinSpeed;
+        sCommand.speed[i] = hardware::motor::kStopSpeed;
     }
     portEXIT_CRITICAL(&sCommandMux);
 }

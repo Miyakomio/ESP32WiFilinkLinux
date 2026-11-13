@@ -129,15 +129,20 @@ float updatePid(PID_t &pid, float target, float actual, float dt)
 
 int16_t clampMotorCommand(float value)
 {
-    return static_cast<int16_t>(
-        lroundf(
-            clampFloat(
-                value,
-                static_cast<float>(hardware::motor::kMinSpeed),
-                static_cast<float>(hardware::motor::kMaxSpeed)
-            )
-        )
+    const float limited = clampFloat(
+        value,
+        static_cast<float>(hardware::motor::kStopSpeed),
+        static_cast<float>(hardware::motor::kMaxSpeed)
     );
+    if (limited <= 0.0f)
+    {
+        return hardware::motor::kStopSpeed;
+    }
+    if (limited < static_cast<float>(hardware::motor::kMinSpeed))
+    {
+        return hardware::motor::kMinSpeed;
+    }
+    return static_cast<int16_t>(lroundf(limited));
 }
 
 } // namespace

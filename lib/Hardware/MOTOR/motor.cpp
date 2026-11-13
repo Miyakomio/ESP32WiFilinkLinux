@@ -9,9 +9,9 @@ namespace
 
 int16_t clampSpeed(int16_t value)
 {
-    if (value < kMinSpeed)
+    if (value < kStopSpeed)
     {
-        return kMinSpeed;
+        return kStopSpeed;
     }
     if (value > kMaxSpeed)
     {
@@ -154,7 +154,7 @@ void MotorController::stopAll()
 {
     for (uint8_t i = 0; i < kMotorCount; ++i)
     {
-        setSpeed(i, kMinSpeed);
+        setSpeed(i, kStopSpeed);
     }
 }
 

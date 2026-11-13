@@ -44,7 +44,7 @@ struct Config
     uint16_t sampleRateHz = 100;
     uint8_t digitalLowPassFilter = 3;
     float complementaryAlpha = 0.98f;
-    float yawGyroDeadbandDps = 1.5f;
+    float yawGyroDeadbandDps = 0.2f;
 };
 
 struct Data

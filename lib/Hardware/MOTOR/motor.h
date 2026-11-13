@@ -9,8 +9,9 @@ namespace motor
 {
 
 constexpr uint8_t kMotorCount = 4;
-constexpr int16_t kMinSpeed = 0;
-constexpr int16_t kMaxSpeed = 1000;
+constexpr int16_t kStopSpeed = 0;//停止输出
+constexpr int16_t kMinSpeed = 100;//正转启动下限
+constexpr int16_t kMaxSpeed = 1000;//电机转速上限
 //motor引脚配置
 struct Config
 {
