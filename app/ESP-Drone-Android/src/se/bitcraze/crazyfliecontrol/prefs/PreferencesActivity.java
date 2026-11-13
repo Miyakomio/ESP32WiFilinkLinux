@@ -120,11 +120,11 @@ public class PreferencesActivity extends PreferenceActivity {
     };
 
     public static final String[] DEFAULT_PID_GAINS = {
-            "0.0", "0.0", "0.0",
-            "0.0", "0.0", "0.0",
-            "0.0", "0.0", "0.0",
-            "1.0", "0.0", "0.0",
-            "1.0", "0.0", "0.0",
+            "5.3", "2.5", "0.0",
+            "5.3", "2.5", "0.0",
+            "1.8", "0.25", "0.0",
+            "2.9", "6.7", "0.04",
+            "2.9", "6.7", "0.04",
     };
 
     public static final String[] KEY_PREF_PID_RANGES = {
@@ -140,7 +140,7 @@ public class PreferencesActivity extends PreferenceActivity {
     };
 
     public static final String[] DEFAULT_PID_RANGE_MAX = {
-            "10.0", "10.0", "5.0", "5.0", "5.0"
+            "10.0", "10.0", "5.0", "10.0", "10.0"
     };
 
     public static final String KEY_PREF_CONTROLLER = "pref_controller";

@@ -64,8 +64,8 @@ android {
         applicationId "com.tinydrone.android.hover"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 59
-        versionName "0.7.45-imu-calibration"
+        versionCode 60
+        versionName "0.7.46-tinydrone-500hz"
     }
 }
 

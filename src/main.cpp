@@ -3,7 +3,7 @@
 namespace
 {
 
-constexpr bool kEnableMotorSequenceTest = true;
+constexpr bool kEnableMotorSequenceTest = false;
 constexpr uint32_t kMotorTestRunMs = 2000;
 constexpr uint32_t kMotorTestPauseMs = 1000;
 
@@ -49,10 +49,10 @@ void setup()
     Serial.begin(115200);
     delay(1000);
 
-    if (kEnableMotorSequenceTest)
-    {
-        runMotorSequenceTest();
-    }
+    // if (kEnableMotorSequenceTest)
+    // {
+    //     runMotorSequenceTest();
+    // }
 
     if (!StartTask())
     {

@@ -50,7 +50,7 @@ void configurePid(
     pid.OutMax = outMax;
     pid.IntegralMin = integralMin;
     pid.IntegralMax = integralMax;
-    pid.DFilterCoef = 0.2f;
+    pid.DFilterCoef = 1.0f;
 }
 
 void resetPid(PID_t &pid)
@@ -156,31 +156,31 @@ void configureMotorPid()
         RollPID,
         5.3f, 2.5f, 0.0f,
         -kMaxRollPitchRateDps, kMaxRollPitchRateDps,
-        -40.0f, 40.0f
+        -50.0f, 50.0f
     );
     configurePid(
         PitchPID,
         5.3f, 2.5f, 0.0f,
         -kMaxRollPitchRateDps, kMaxRollPitchRateDps,
-        -40.0f, 40.0f
+        -50.0f, 50.0f
     );
     configurePid(
         RollVelocityPID,
         2.9f, 6.7f, 0.04f,
         -kMaxRateCorrection, kMaxRateCorrection,
-        -200.0f, 200.0f
+        -224.0f, 224.0f
     );
     configurePid(
         PitchVelocityPID,
         2.9f, 6.7f, 0.04f,
         -kMaxRateCorrection, kMaxRateCorrection,
-        -200.0f, 200.0f
+        -224.0f, 224.0f
     );
     configurePid(
         YawPID,
         1.8f, 0.25f, 0.0f,
         -kMaxYawRateDps, kMaxYawRateDps,
-        -45.0f, 45.0f
+        -43.0f, 43.0f
     );
 }
 
@@ -213,8 +213,8 @@ bool applyMotorPidSettings(const PidSettings &settings)
         settings.rollAngle.kd,
         -kMaxRollPitchRateDps,
         kMaxRollPitchRateDps,
-        -10.0f,
-        10.0f
+        -50.0f,
+        50.0f
     );
     configurePid(
         PitchPID,
@@ -223,8 +223,8 @@ bool applyMotorPidSettings(const PidSettings &settings)
         settings.pitchAngle.kd,
         -kMaxRollPitchRateDps,
         kMaxRollPitchRateDps,
-        -10.0f,
-        10.0f
+        -50.0f,
+        50.0f
     );
     configurePid(
         YawPID,
@@ -233,8 +233,8 @@ bool applyMotorPidSettings(const PidSettings &settings)
         settings.yawRate.kd,
         -kMaxYawRateDps,
         kMaxYawRateDps,
-        -30.0f,
-        30.0f
+        -43.0f,
+        43.0f
     );
     configurePid(
         RollVelocityPID,
@@ -243,8 +243,8 @@ bool applyMotorPidSettings(const PidSettings &settings)
         settings.rollRate.kd,
         -kMaxRateCorrection,
         kMaxRateCorrection,
-        -40.0f,
-        40.0f
+        -224.0f,
+        224.0f
     );
     configurePid(
         PitchVelocityPID,
@@ -253,8 +253,8 @@ bool applyMotorPidSettings(const PidSettings &settings)
         settings.pitchRate.kd,
         -kMaxRateCorrection,
         kMaxRateCorrection,
-        -40.0f,
-        40.0f
+        -224.0f,
+        224.0f
     );
     resetPidInternal();
     portEXIT_CRITICAL(&sPidMux);

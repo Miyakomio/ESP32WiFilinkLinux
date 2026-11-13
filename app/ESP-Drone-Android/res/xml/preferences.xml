@@ -222,12 +222,12 @@
                     android:key="pref_pid_range_yaw_rate_min"
                     android:title="@string/preferences_pid_range_min" />
                 <EditTextPreference
-                    android:defaultValue="@string/preferences_pid_range_five_defaultValue"
+                    android:defaultValue="@string/preferences_pid_range_ten_defaultValue"
                     android:inputType="numberDecimal"
                     android:key="pref_pid_range_yaw_rate_max"
                     android:title="@string/preferences_pid_range_max" />
                 <se.bitcraze.crazyfliecontrol.prefs.SliderPreference
-                    custom:upperLimit="5"
+                    custom:upperLimit="10"
                     custom:steps="250"
                     custom:rangeKey="pref_pid_range_yaw_rate"
                     android:defaultValue="@string/preferences_pid_zero_defaultValue"
@@ -256,19 +256,19 @@
                     android:key="pref_pid_range_rate_roll_min"
                     android:title="@string/preferences_pid_range_min" />
                 <EditTextPreference
-                    android:defaultValue="@string/preferences_pid_range_five_defaultValue"
+                    android:defaultValue="@string/preferences_pid_range_ten_defaultValue"
                     android:inputType="numberDecimal"
                     android:key="pref_pid_range_rate_roll_max"
                     android:title="@string/preferences_pid_range_max" />
                 <se.bitcraze.crazyfliecontrol.prefs.SliderPreference
-                    custom:upperLimit="5"
+                    custom:upperLimit="10"
                     custom:steps="250"
                     custom:rangeKey="pref_pid_range_rate_roll"
                     android:defaultValue="@string/preferences_pid_one_defaultValue"
                     android:key="pref_pid_rate_roll_kp"
                     android:title="@string/preferences_pid_kp" />
                 <se.bitcraze.crazyfliecontrol.prefs.SliderPreference
-                    custom:upperLimit="5"
+                    custom:upperLimit="10"
                     custom:steps="250"
                     custom:rangeKey="pref_pid_range_rate_roll"
                     android:defaultValue="@string/preferences_pid_zero_defaultValue"
@@ -290,19 +290,19 @@
                     android:key="pref_pid_range_rate_pitch_min"
                     android:title="@string/preferences_pid_range_min" />
                 <EditTextPreference
-                    android:defaultValue="@string/preferences_pid_range_five_defaultValue"
+                    android:defaultValue="@string/preferences_pid_range_ten_defaultValue"
                     android:inputType="numberDecimal"
                     android:key="pref_pid_range_rate_pitch_max"
                     android:title="@string/preferences_pid_range_max" />
                 <se.bitcraze.crazyfliecontrol.prefs.SliderPreference
-                    custom:upperLimit="5"
+                    custom:upperLimit="10"
                     custom:steps="250"
                     custom:rangeKey="pref_pid_range_rate_pitch"
                     android:defaultValue="@string/preferences_pid_one_defaultValue"
                     android:key="pref_pid_rate_pitch_kp"
                     android:title="@string/preferences_pid_kp" />
                 <se.bitcraze.crazyfliecontrol.prefs.SliderPreference
-                    custom:upperLimit="5"
+                    custom:upperLimit="10"
                     custom:steps="250"
                     custom:rangeKey="pref_pid_range_rate_pitch"
                     android:defaultValue="@string/preferences_pid_zero_defaultValue"

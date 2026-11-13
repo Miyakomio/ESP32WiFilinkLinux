@@ -63,20 +63,21 @@ void entry(void *context)
         if (!isLocked())
         {
             const uint32_t now = millis();
+            const uint32_t nowUs = micros();
             const mpu_task::DataSnapshot imu =
                 mpu_task::latestData();
             const softapp::wifi::RemoteCommand remote =
                 wifi_task::latestCommand();
 
-            static uint32_t lastControlMs = 0;
+            static uint32_t lastControlUs = 0;
             float dt = 0.02f;
-            if (lastControlMs != 0)
+            if (lastControlUs != 0)
             {
                 dt = static_cast<float>(
-                    now - lastControlMs
-                ) / 1000.0f;
+                    nowUs - lastControlUs
+                ) / 1000000.0f;
             }
-            lastControlMs = now;
+            lastControlUs = nowUs;
 
             if (dt <= 0.0f || dt > 0.1f)
             {
@@ -159,6 +160,21 @@ void entry(void *context)
                 controlValid ? "on" : "off"
             );
         }
+
+        static uint32_t rateWindowStartMs = millis();
+        static uint32_t rateIterations = 0;
+        ++rateIterations;
+        const uint32_t rateNowMs = millis();
+        if (rateNowMs - rateWindowStartMs >= 2000)
+        {
+            const float loopHz =
+                static_cast<float>(rateIterations) * 1000.0f /
+                static_cast<float>(rateNowMs - rateWindowStartMs);
+            Serial.printf("MOTOR loop_hz=%.1f\n", loopHz);
+            rateWindowStartMs = rateNowMs;
+            rateIterations = 0;
+        }
+
         vTaskDelay(pdMS_TO_TICKS(sConfig.outputIntervalMs));
     }
 }

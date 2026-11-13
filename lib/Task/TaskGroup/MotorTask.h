@@ -14,7 +14,7 @@ namespace motor_task
 struct Config
 {
     hardware::motor::Config controller{};
-    uint32_t outputIntervalMs = 20;
+    uint32_t outputIntervalMs = 2;
     uint32_t commandTimeoutMs = 2000;//超时时间
 };
 

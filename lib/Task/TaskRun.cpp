@@ -105,11 +105,11 @@ bool StartTask()
         task_group::mpu_task::Config mpuConfig;
         mpuConfig.iic.sdaPin = 10;
         mpuConfig.iic.sclPin = 11;
-        mpuConfig.iic.clockHz = 100000;
+        mpuConfig.iic.clockHz = 400000;
         mpuConfig.sensor.address =
             softapp::mpu6050::kAddressAd0Low;
-        mpuConfig.sensor.sampleRateHz = 100;
-        mpuConfig.sampleIntervalMs = 10;
+        mpuConfig.sensor.sampleRateHz = 500;
+        mpuConfig.sampleIntervalMs = 2;
         mpuConfig.gyroCalibrationSamples = 2000;
         mpuConfig.statusIntervalMs = 200;
         task_group::mpu_task::configure(mpuConfig);
