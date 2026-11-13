@@ -37,7 +37,6 @@ public class CommanderPacket extends CrtpPacket {
     private final float mPitch;
     private final float mYaw;
     private final char mThrust;
-    private final boolean mClientXmode; // client side x-mode (default is +-mode)
 
     /**
      * Create a new commander packet.
@@ -46,22 +45,14 @@ public class CommanderPacket extends CrtpPacket {
      * @param pitch (Deg.)
      * @param yaw (Deg./s)
      * @param thrust (0-65535)
-     * @param clientXmode if true, then roll and pitch values are recalculated before sending them to the Crazyflie
+     * @param clientXmode retained for constructor compatibility; values are sent directly
      */
     public CommanderPacket(float roll, float pitch, float yaw, char thrust,
                            boolean clientXmode, boolean carefree) {
         // Tiny-Drone uses CRTP header reserved bit 0 as its carefree flag.
         super(0, CrtpPort.COMMANDER, carefree ? 1 : 0);
-        this.mClientXmode = clientXmode;
-
-        if (this.mClientXmode) {
-            //offset by 45 degrees
-            this.mRoll = 0.707f * (roll - pitch);
-            this.mPitch = 0.707f * (roll + pitch);
-        } else {
-            this.mRoll = roll;
-            this.mPitch = pitch;
-        }
+        this.mRoll = roll;
+        this.mPitch = pitch;
         this.mYaw = yaw;
         this.mThrust = thrust;
     }
@@ -85,7 +76,7 @@ public class CommanderPacket extends CrtpPacket {
     @Override
     protected void serializeData(ByteBuffer buffer) {
         buffer.putFloat(mRoll);
-        buffer.putFloat(-mPitch); //invert axis
+        buffer.putFloat(mPitch);
         buffer.putFloat(mYaw);
         buffer.putChar(mThrust);
     }
@@ -97,7 +88,7 @@ public class CommanderPacket extends CrtpPacket {
 
     @Override
     public String toString() {
-        return "CommanderPacket: roll: " + this.mRoll + " pitch: " + this.mPitch + " yaw: " + this.mYaw + " thrust: " + (int) this.mThrust + " xmode: " + this.mClientXmode;
+        return "CommanderPacket: roll: " + this.mRoll + " pitch: " + this.mPitch + " yaw: " + this.mYaw + " thrust: " + (int) this.mThrust;
     }
 
 }

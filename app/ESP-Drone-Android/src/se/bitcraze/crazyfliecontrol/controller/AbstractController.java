@@ -75,7 +75,7 @@ public abstract class AbstractController implements IController {
      * Thrust value in percent (used in the UI)
      */
     public float getThrust() {
-        float thrust = ((mControls.getMode() == 1 || mControls.getMode() == 3) ? mControls.getRightAnalog_Y() : mControls.getLeftAnalog_Y());
+        float thrust = mControls.getLeftAnalog_Y();
         if (thrust > mControls.getDeadzone()) {
             return mControls.getMinThrust() + (thrust * mControls.getThrustFactor());
         }
@@ -94,18 +94,17 @@ public abstract class AbstractController implements IController {
     }
 
     public float getRoll() {
-        float roll = (mControls.getMode() == 1 || mControls.getMode() == 2) ? mControls.getRightAnalog_X() : mControls.getLeftAnalog_X();
+        float roll = -mControls.getRightAnalog_Y();
         return ((roll * mControls.getDeadzone(roll)) + mControls.getRollTrim()) * mControls.getRollPitchFactor();
     }
 
     public float getPitch() {
-        float pitch = (mControls.getMode() == 1 || mControls.getMode() == 3) ? mControls.getLeftAnalog_Y() : mControls.getRightAnalog_Y();
+        float pitch = -mControls.getRightAnalog_X();
         return ((pitch * mControls.getDeadzone(pitch)) + mControls.getPitchTrim()) * mControls.getRollPitchFactor();
     }
 
     public float getYaw() {
-        float yaw = 0;
-        yaw = (mControls.getMode() == 1 || mControls.getMode() == 2) ? mControls.getLeftAnalog_X() : mControls.getRightAnalog_X();
+        float yaw = -mControls.getLeftAnalog_X();
         return yaw * mControls.getYawFactor() * mControls.getDeadzone(yaw);
     }
 

@@ -54,13 +54,26 @@ ESP32WiFilinkLinux/
 | 低电量指示灯 | LED | GPIO5 |
 | 摄像头 | OV3660 | 由 CameraTask 配置 |
 
-电机 PWM 分辨率为 10 位，软件速度范围为 0 至 1000。飞控当前使用 X 型机架混控，APP 中也应开启 X-Mode。
+电机 PWM 分辨率为 10 位，软件速度范围为 0 至 1000。飞控当前固定使用 X 型机架混控。
 
 硬件引脚以源码中的实际配置为准：
 
 - `lib/Hardware/MOTOR/motor.h`
 - `lib/Task/TaskRun.cpp`
 - `lib/Task/TaskGroup/CameraTask.cpp`
+
+## 摇杆映射
+
+Android APP 当前使用固定摇杆映射：
+
+| 摇杆输入 | 控制量 | 方向 |
+| --- | --- | --- |
+| 左摇杆上下 | Throttle | 向上增大，向下减小 |
+| 左摇杆左右 | Yaw | 向左增大，向右减小 |
+| 右摇杆上下 | Roll | 向上减小，向下增大 |
+| 右摇杆左右 | Pitch | 向左增大，向右减小 |
+
+APP 直接发送最终的 Roll、Pitch、Yaw 和 Throttle 数值，不再在数据包内部执行 X-Mode 45 度旋转或额外轴取反。飞控端继续使用 X 型电机混控。
 
 ## 通信方式
 
