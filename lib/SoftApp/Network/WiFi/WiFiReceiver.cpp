@@ -16,10 +16,14 @@ constexpr uint8_t kCommanderChannel = 0;
 constexpr uint8_t kHoverChannel = 1;
 constexpr uint8_t kArmChannel = 2;
 constexpr uint8_t kPidSettingsChannel = 3;
+constexpr uint8_t kCalibrationPort = 8;
+constexpr uint8_t kCalibrationChannel = 0;
 constexpr uint8_t kRidPort = 13;
 constexpr uint8_t kRidChannel = 2;
 constexpr uint8_t kPidSettingsMagic = 0x50;
 constexpr uint8_t kPidSettingsVersion = 1;
+constexpr uint8_t kCalibrationMagic = 0xCA;
+constexpr uint8_t kCalibrationVersion = 1;
 constexpr size_t kPidLoopCount = 5;
 constexpr size_t kPidGainCount = kPidLoopCount * 3;
 constexpr size_t kPidSettingsPayloadSize = 4 + kPidGainCount * 4;
@@ -246,6 +250,11 @@ void WiFiReceiver::setPidSettingsHandler(PidSettingsHandler handler)
     mPidSettingsHandler = handler;
 }
 
+void WiFiReceiver::setCalibrationHandler(CalibrationHandler handler)
+{
+    mCalibrationHandler = handler;
+}
+
 bool WiFiReceiver::isCommandFresh(
     const RemoteCommand &command,
     uint32_t maxAgeMs
@@ -417,6 +426,28 @@ bool WiFiReceiver::handlePacket(
         return true;
     }
 
+    if (header.port == kCalibrationPort &&
+        header.channel == kCalibrationChannel)
+    {
+        if (!decodeCalibration(payload, payloadLength))
+        {
+            portENTER_CRITICAL(&mDataMux);
+            ++mStats.invalidPackets;
+            portEXIT_CRITICAL(&mDataMux);
+            return false;
+        }
+
+        portENTER_CRITICAL(&mDataMux);
+        ++mStats.calibrationPackets;
+        portEXIT_CRITICAL(&mDataMux);
+
+        if (mCalibrationHandler != nullptr)
+        {
+            mCalibrationHandler();
+        }
+        return true;
+    }
+
     if (header.port == kRidPort && header.channel == kRidChannel)
     {
         RidInfo rid;
@@ -573,6 +604,17 @@ bool WiFiReceiver::decodePidSettings(
     decoded.valid = true;
     settings = decoded;
     return true;
+}
+
+bool WiFiReceiver::decodeCalibration(
+    const uint8_t *payload,
+    size_t length
+)
+{
+    return payload != nullptr &&
+        length == 2 &&
+        payload[0] == kCalibrationMagic &&
+        payload[1] == kCalibrationVersion;
 }
 
 CrtpHeader WiFiReceiver::parseHeader(uint8_t header)

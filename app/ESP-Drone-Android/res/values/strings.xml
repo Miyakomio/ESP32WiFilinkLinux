@@ -26,6 +26,9 @@
     <string name="arm_button_unlock">解锁</string>
     <string name="arm_button_lock">上锁</string>
     <string name="arm_button_ContentDescription">Drone arm/disarm button</string>
+    <string name="calibration_button_ContentDescription">IMU 水平与陀螺仪校准</string>
+    <string name="calibration_started">已上锁并开始校准，请保持飞机水平静止约 4 秒</string>
+    <string name="calibration_not_connected">请先连接飞控再校准</string>
     <string name="video_record_start_button">录制</string>
     <string name="video_record_stop_button">停止</string>
     <string name="video_record_button_ContentDescription">开始或停止录制视频字节流</string>

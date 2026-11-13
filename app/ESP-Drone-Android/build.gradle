@@ -64,8 +64,8 @@ android {
         applicationId "com.tinydrone.android.hover"
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 58
-        versionName "0.7.44-axis-map"
+        versionCode 59
+        versionName "0.7.45-imu-calibration"
     }
 }
 

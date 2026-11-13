@@ -14,6 +14,7 @@ import se.bitcraze.crazyflie.lib.crtp.CommanderPacket;
 import se.bitcraze.crazyflie.lib.crtp.CrtpDriver;
 import se.bitcraze.crazyflie.lib.crtp.CrtpPacket;
 import se.bitcraze.crazyflie.lib.crtp.ArmPacket;
+import se.bitcraze.crazyflie.lib.crtp.CalibrationPacket;
 import se.bitcraze.crazyflie.lib.crtp.HoverPacket;
 import se.bitcraze.crazyflie.lib.crtp.ZDistancePacket;
 import se.bitcraze.crazyflie.lib.log.LogAdapter;
@@ -209,6 +210,12 @@ public class MainPresenter {
         if (mCrazyflie != null) {
             mCrazyflie.sendPacket(packet);
         }
+    }
+
+    public void requestImuCalibration() {
+        sendPacket(new ArmPacket(false));
+        sendPacket(new ArmPacket(false));
+        sendPacket(new CalibrationPacket());
     }
 
     /**

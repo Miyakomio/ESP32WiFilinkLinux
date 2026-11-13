@@ -18,6 +18,9 @@ DataHandler sDataHandler = nullptr;
 bool sConfigured = false;
 DataSnapshot sLatestData;
 portMUX_TYPE sDataMux = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE sCalibrationMux = portMUX_INITIALIZER_UNLOCKED;
+bool sCalibrationRequested = false;
+bool sCalibrationActive = false;
 
 void entry(void *context)
 {
@@ -90,6 +93,51 @@ void entry(void *context)
             Serial.println("MPU6050 采样开始");
             started = true;
             sampling = true;
+        }
+
+        bool runCalibration = false;
+        portENTER_CRITICAL(&sCalibrationMux);
+        if (sCalibrationRequested)
+        {
+            sCalibrationRequested = false;
+            sCalibrationActive = true;
+            runCalibration = true;
+        }
+        portEXIT_CRITICAL(&sCalibrationMux);
+
+        if (runCalibration)
+        {
+            portENTER_CRITICAL(&sDataMux);
+            sLatestData.valid = false;
+            portEXIT_CRITICAL(&sDataMux);
+
+            Serial.println("MPU calibration started: keep level and still");
+            const softapp::mpu6050::Result calibrationResult =
+                sSensor.calibrateLevelAndGyro(
+                    sConfig.gyroCalibrationSamples
+                );
+            if (calibrationResult == softapp::mpu6050::Result::Ok)
+            {
+                const float *bias = sSensor.gyroBiasDps();
+                Serial.printf(
+                    "MPU calibration complete: G=[%.3f %.3f %.3f]dps\n",
+                    bias[0],
+                    bias[1],
+                    bias[2]
+                );
+            }
+            else
+            {
+                Serial.printf(
+                    "MPU calibration failed: %s\n",
+                    softapp::mpu6050::toString(calibrationResult)
+                );
+            }
+
+            portENTER_CRITICAL(&sCalibrationMux);
+            sCalibrationActive = false;
+            portEXIT_CRITICAL(&sCalibrationMux);
+            continue;
         }
 
         softapp::mpu6050::Data data;
@@ -176,6 +224,40 @@ DataSnapshot latestData()
     const DataSnapshot snapshot = sLatestData;
     portEXIT_CRITICAL(&sDataMux);
     return snapshot;
+}
+
+bool requestCalibration()
+{
+    if (!sConfigured)
+    {
+        return false;
+    }
+
+    bool accepted = false;
+    portENTER_CRITICAL(&sCalibrationMux);
+    if (!sCalibrationActive)
+    {
+        sCalibrationRequested = true;
+        accepted = true;
+    }
+    portEXIT_CRITICAL(&sCalibrationMux);
+
+    if (accepted)
+    {
+        portENTER_CRITICAL(&sDataMux);
+        sLatestData.valid = false;
+        portEXIT_CRITICAL(&sDataMux);
+    }
+    return accepted;
+}
+
+bool isCalibrating()
+{
+    portENTER_CRITICAL(&sCalibrationMux);
+    const bool calibrating =
+        sCalibrationRequested || sCalibrationActive;
+    portEXIT_CRITICAL(&sCalibrationMux);
+    return calibrating;
 }
 
 BaseType_t create(

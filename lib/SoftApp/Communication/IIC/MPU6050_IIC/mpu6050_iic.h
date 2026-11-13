@@ -72,6 +72,7 @@ public:
 
     Result read(Data &data);
     Result calibrateGyro(uint16_t samples = 2000);
+    Result calibrateLevelAndGyro(uint16_t samples = 1000);
     void resetAttitude();
 
     const Config &config() const;
@@ -89,6 +90,8 @@ private:
     bool mAttitudeInitialized = false;
     uint32_t mLastSampleUs = 0;
     float mGyroBiasDps[3] = {};
+    float mRollOffsetDeg = 0.0f;
+    float mPitchOffsetDeg = 0.0f;
     float mRollDeg = 0.0f;
     float mPitchDeg = 0.0f;
     float mYawDeg = 0.0f;

@@ -80,6 +80,7 @@ struct ReceiverStats
     uint32_t hoverPackets = 0;
     uint32_t armPackets = 0;
     uint32_t pidPackets = 0;
+    uint32_t calibrationPackets = 0;
     uint32_t ridPackets = 0;
     uint32_t lastRxMs = 0;
 };
@@ -93,6 +94,7 @@ public:
     using PidSettingsHandler = void (*)(
         const RemotePidSettings &settings
     );
+    using CalibrationHandler = void (*)();
 
     ReceiverResult begin(uint16_t port = 2390);
     void end();
@@ -120,6 +122,7 @@ public:
     void setHoverHandler(HoverHandler handler);
     void setArmHandler(ArmHandler handler);
     void setPidSettingsHandler(PidSettingsHandler handler);
+    void setCalibrationHandler(CalibrationHandler handler);
 
     static bool isCommandFresh(
         const RemoteCommand &command,
@@ -167,6 +170,10 @@ private:
         size_t length,
         RemotePidSettings &settings
     );
+    bool decodeCalibration(
+        const uint8_t *payload,
+        size_t length
+    );
     static CrtpHeader parseHeader(uint8_t header);
 
     WiFiUDP mUdp;
@@ -188,6 +195,7 @@ private:
     HoverHandler mHoverHandler = nullptr;
     ArmHandler mArmHandler = nullptr;
     PidSettingsHandler mPidSettingsHandler = nullptr;
+    CalibrationHandler mCalibrationHandler = nullptr;
     portMUX_TYPE mDataMux = portMUX_INITIALIZER_UNLOCKED;
 };
 

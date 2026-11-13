@@ -132,6 +132,7 @@ public class MainActivity extends EspActivity {
 
     private ImageButton mToggleConnectButton;
     private TextView mArmButton;
+    private ImageButton mCalibrationButton;
     private ImageButton mRingEffectButton;
     private ImageButton mHeadlightButton;
     private ImageButton mBuzzerSoundButton;
@@ -381,6 +382,40 @@ public class MainActivity extends EspActivity {
               startActivity(intent);
             }
         });
+
+        mCalibrationButton = (ImageButton) findViewById(R.id.imageButton_calibrate);
+        mCalibrationButton.setEnabled(false);
+        mCalibrationButton.setAlpha(0.5f);
+        mCalibrationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startImuCalibration();
+            }
+        });
+    }
+
+    private void startImuCalibration() {
+        if (mPresenter == null ||
+            mPresenter.getCrazyflie() == null ||
+            !mPresenter.getCrazyflie().isConnected()) {
+            showToastie(getString(R.string.calibration_not_connected));
+            return;
+        }
+
+        setArmButtonAvailable(false);
+        mPresenter.requestImuCalibration();
+        showToastie(getString(R.string.calibration_started));
+
+        mArmButton.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                final boolean connected =
+                    mPresenter != null &&
+                    mPresenter.getCrazyflie() != null &&
+                    mPresenter.getCrazyflie().isConnected();
+                setArmButtonAvailable(connected);
+            }
+        }, 5000);
     }
 
     private void connectCrazyradio() {
@@ -1130,6 +1165,10 @@ public class MainActivity extends EspActivity {
                 }
                 mArmButton.setEnabled(available);
                 mArmButton.setAlpha(available ? 1.0f : 0.5f);
+                if (mCalibrationButton != null) {
+                    mCalibrationButton.setEnabled(available);
+                    mCalibrationButton.setAlpha(available ? 1.0f : 0.5f);
+                }
             }
         });
     }

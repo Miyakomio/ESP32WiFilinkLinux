@@ -34,6 +34,8 @@ void configure(const Config &config);
 bool isConfigured();
 void setDataHandler(DataHandler handler);
 DataSnapshot latestData();
+bool requestCalibration();
+bool isCalibrating();
 
 BaseType_t create(
     TaskHandle_t *handle,

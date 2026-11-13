@@ -2,6 +2,7 @@
 
 #include "BatteryTask.h"
 #include "MotorTask.h"
+#include "MpuTask.h"
 #include "../../SoftApp/Control/MotorControl.h"
 
 namespace task_group
@@ -104,6 +105,17 @@ void handleArm(const softapp::wifi::RemoteArm &arm)
     }
     else if (!armed)
     {
+        if (mpu_task::isCalibrating())
+        {
+            motor_task::lock();
+            if (millis() - lastRejectLogMs >= 1000)
+            {
+                lastRejectLogMs = millis();
+                Serial.println("Arm request: REJECTED (calibration active)");
+            }
+            return;
+        }
+
         const softapp::wifi::RemoteCommand command =
             sReceiver.latestCommand();
         const bool commandFresh =
@@ -137,6 +149,17 @@ void handleArm(const softapp::wifi::RemoteArm &arm)
     {
         sUserArmHandler(arm);
     }
+}
+
+void handleCalibration()
+{
+    motor_task::lock();
+    const bool accepted = mpu_task::requestCalibration();
+    Serial.println(
+        accepted
+            ? "Calibration request: ACCEPTED (motors locked)"
+            : "Calibration request: REJECTED"
+    );
 }
 
 void handlePidSettings(
@@ -287,11 +310,12 @@ void entry(void *context)
             const bool hoverFresh =
                 softapp::wifi::WiFiReceiver::isHoverFresh(hover, 1000);
             Serial.printf(
-                "WiFi dev=%u rx=%lu cmd=%lu hover=%lu rid=%lu bad=%lu state=%s\n",
+                "WiFi dev=%u rx=%lu cmd=%lu hover=%lu cal=%lu rid=%lu bad=%lu state=%s\n",
                 static_cast<unsigned>(sService.stationCount()),
                 static_cast<uint32_t>(stats.packets),
                 static_cast<uint32_t>(stats.commandPackets),
                 static_cast<uint32_t>(stats.hoverPackets),
+                static_cast<uint32_t>(stats.calibrationPackets),
                 static_cast<uint32_t>(stats.ridPackets),
                 static_cast<uint32_t>(
                     stats.checksumErrors + stats.invalidPackets
@@ -315,6 +339,7 @@ void configure(const softapp::wifi::AccessPointConfig &config)
     sReceiver.setHoverHandler(handleHover);
     sReceiver.setArmHandler(handleArm);
     sReceiver.setPidSettingsHandler(handlePidSettings);
+    sReceiver.setCalibrationHandler(handleCalibration);
 }
 
 void setCommandHandler(

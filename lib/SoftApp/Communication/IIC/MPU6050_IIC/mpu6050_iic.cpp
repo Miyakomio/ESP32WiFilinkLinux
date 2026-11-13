@@ -85,6 +85,8 @@ Result MPU6050_IIC::begin(iic::Bus &bus, const Config &config)
     mConfig = config;
     mAttitudeInitialized = false;
     mLastSampleUs = 0;
+    mRollOffsetDeg = 0.0f;
+    mPitchOffsetDeg = 0.0f;
     mRollDeg = 0.0f;
     mPitchDeg = 0.0f;
     mYawDeg = 0.0f;
@@ -185,12 +187,14 @@ Result MPU6050_IIC::read(Data &data)
                 data.accelG[2] * data.accelG[2]
             )
         ) * RadToDeg;
+    const float levelRoll = accelRoll - mRollOffsetDeg;
+    const float levelPitch = accelPitch - mPitchOffsetDeg;
 
     const uint32_t nowUs = micros();
     if (!mAttitudeInitialized)
     {
-        mRollDeg = accelRoll;
-        mPitchDeg = accelPitch;
+        mRollDeg = levelRoll;
+        mPitchDeg = levelPitch;
         mYawDeg = 0.0f;
         data.rollDeg = mRollDeg;
         data.pitchDeg = mPitchDeg;
@@ -212,10 +216,10 @@ Result MPU6050_IIC::read(Data &data)
 
     mRollDeg = mConfig.complementaryAlpha *
         (mRollDeg + data.gyroDps[0] * dt) +
-        (1.0f - mConfig.complementaryAlpha) * accelRoll;
+        (1.0f - mConfig.complementaryAlpha) * levelRoll;
     mPitchDeg = mConfig.complementaryAlpha *
         (mPitchDeg + data.gyroDps[1] * dt) +
-        (1.0f - mConfig.complementaryAlpha) * accelPitch;
+        (1.0f - mConfig.complementaryAlpha) * levelPitch;
     mYawDeg = wrapDegrees(mYawDeg + data.gyroDps[2] * dt);
 
     data.rollDeg = mRollDeg;
@@ -259,6 +263,60 @@ Result MPU6050_IIC::calibrateGyro(uint16_t samples)
     {
         mGyroBiasDps[axis] = sum[axis] / static_cast<float>(samples);
     }
+
+    resetAttitude();
+    return Result::Ok;
+}
+
+Result MPU6050_IIC::calibrateLevelAndGyro(uint16_t samples)
+{
+    if (!mReady)
+    {
+        return Result::NotInitialized;
+    }
+    if (samples == 0)
+    {
+        return Result::InvalidConfig;
+    }
+
+    const float aScale = accelScale(mConfig.accelRange);
+    const float gScale = gyroScale(mConfig.gyroRange);
+    float gyroSum[3] = {};
+    float rollSum = 0.0f;
+    float pitchSum = 0.0f;
+
+    for (uint16_t i = 0; i < samples; ++i)
+    {
+        uint8_t raw[14] = {};
+        if (readRegisters(AccelXoutHReg, raw, sizeof(raw)) != Result::Ok)
+        {
+            return Result::BusError;
+        }
+
+        float accel[3] = {};
+        for (uint8_t axis = 0; axis < 3; ++axis)
+        {
+            accel[axis] =
+                static_cast<float>(readInt16(&raw[axis * 2])) * aScale;
+            gyroSum[axis] +=
+                static_cast<float>(readInt16(&raw[8 + axis * 2])) * gScale;
+        }
+
+        rollSum += atan2f(accel[1], accel[2]) * RadToDeg;
+        pitchSum += atan2f(
+            -accel[0],
+            sqrtf(accel[1] * accel[1] + accel[2] * accel[2])
+        ) * RadToDeg;
+        delay(2);
+    }
+
+    for (uint8_t axis = 0; axis < 3; ++axis)
+    {
+        mGyroBiasDps[axis] =
+            gyroSum[axis] / static_cast<float>(samples);
+    }
+    mRollOffsetDeg = rollSum / static_cast<float>(samples);
+    mPitchOffsetDeg = pitchSum / static_cast<float>(samples);
 
     resetAttitude();
     return Result::Ok;
